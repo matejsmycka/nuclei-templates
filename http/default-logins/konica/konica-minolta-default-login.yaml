@@ -1,0 +1,66 @@
+id: konica-minolta-default-login
+
+info:
+  name: Konica - Default Login
+  author: matejsmycka
+  severity: high
+  description: |
+    Konica Minolta printers with default credentials can be accessed using the default username and password.
+  reference:
+    - https://manuals.konicaminolta.eu/ineo-654e-754e/EN/contents/id08-_101032677.html
+  tags: konica,default-login
+
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}/
+
+    extractors:
+      - type: regex
+        part: body
+        name: osd
+        group: 1
+        internal: true
+        regex:
+          - "&quot;version&quot;:&quot;([0-9.]+)&quot;"
+
+  - raw:
+      - |
+        POST /auth/login HTTP/1.1
+        Host: {{Hostname}}
+        Osd-Version: {{osd}}
+        osd-xsrf: osd-fetch
+        Content-Type: application/json
+
+        {"username":"{{username}}","password":"{{password}}"}
+
+    attack: clusterbomb
+    payloads:
+      username:
+        - "admin"
+        - "wazuh"
+      password:
+        - "admin"
+        - "wazuh"
+        - "SecretPassword"
+    stop-at-first-match: true
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - '"username":'
+          - '"roles":'
+        condition: and
+
+      - type: word
+        part: header
+        words:
+          - "application/json"
+        condition: and
+
+      - type: status
+        status:
+          - 200
+# digest: 4b0a00483046022100aca7bbbb749653943f26192c2bb39a5a83889241e8a6ac72e457b842238a89280221008901a5d5e1e7e5ecabf6f1cedea365ea8a26bd3d39e410a2e47fadfd02ac355f:922c64590222798bb761d5b6d8e72950
