@@ -1,0 +1,60 @@
+id: generic-http-login
+
+info:
+  name: Generic HTTP - Default Login
+  author: matejsmycka
+  description: |
+    Generic HTTP service with default credentials.
+  severity: high
+  tags: http,default-login
+
+requests:
+  - raw:
+      - |
+        GET {{login_path}} HTTP/1.1
+        Host: {{Hostname}}
+        Authorization: Basic {{base64(username + ":" + password)}}
+
+    attack: clusterbomb
+    payloads:
+      username:
+        - admin
+        - test
+      password:
+        - admin
+        - test
+        - password
+      login_path:
+        - /login
+        - /admin
+        - /logs
+        - /
+
+    matchers-condition: and
+    stop-at-first-match: true
+    matchers:
+      - type: status
+        status:
+          - 200
+
+      - type: word
+        part: header
+        condition: or
+        words:
+          - "Content-Type: text/html"
+          - "Content-Type: application/json"
+          - "Content-Type: text/plain"
+
+      - type: word
+        part: body
+        negative: true
+        words:
+          - "invalid"
+          - "failed"
+          - "error"
+          - "unauthorized"
+          - "forbidden"
+          - "not found"
+          - "login"
+          - "sign in"
+        
