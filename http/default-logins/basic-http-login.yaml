@@ -8,8 +8,15 @@ info:
   severity: high
   tags: http,default-login
 
+flow: http(1) && http(2)
+
 requests:
   - raw:
+      - |
+        GET {{login_path}} HTTP/1.1
+        Host: {{Hostname}}
+        Authorization: Basic RandomStringThatDoesNotExist==
+
       - |
         GET {{login_path}} HTTP/1.1
         Host: {{Hostname}}
@@ -30,31 +37,10 @@ requests:
         - /logs
         - /
 
-    matchers-condition: and
     stop-at-first-match: true
     matchers:
-      - type: status
-        status:
-          - 200
-
-      - type: word
-        part: header
-        condition: or
-        words:
-          - "Content-Type: text/html"
-          - "Content-Type: application/json"
-          - "Content-Type: text/plain"
-
-      - type: word
-        part: body
-        negative: true
-        words:
-          - "invalid"
-          - "failed"
-          - "error"
-          - "unauthorized"
-          - "forbidden"
-          - "not found"
-          - "login"
-          - "sign in"
-        
+      - type: dsl
+        condition: and
+        dsl:
+          - 'status_code_1 == 401 || status_code_1 == 403 || status_code_1 == 301'
+          - 'status_code_2 == 200'
