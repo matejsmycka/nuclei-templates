@@ -4,7 +4,7 @@ info:
   author: matejsmycka
   description: Fuzzing for /windows/win.ini.
   severity: high
-  tags: windows,lfi,fuzz
+  tags: windows,lfi,fuzzing
 
 http:
   - method: GET
